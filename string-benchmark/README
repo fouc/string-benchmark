@@ -1,0 +1,34 @@
+=====
+Quick C/C++ String Benchmark.
+=====
+
+The third-party and cmake directories contains (awesome) work 
+from Paul Hsieh, Maxim Yegorushkin and Joshua L. Blocher.
+
+Requires:
+
+- cmake
+- Perl
+- Python libraries
+- Boehm Garbage Collector + Cord
+- Qt4
+- GNU time
+- md5sum
+- Data::Dumper
+
+So, if you're feeling (very) lucky, you can:
+
+    $ mkdir build
+    $ cd build
+    $ cmake ..
+    $ make -j4
+    $ cd ..
+    $ perl benchmark.pl README --path=build --verbose > results.pm
+
+This program (and accompanying files) is free software; 
+you can redistribute it and/or modify it under the terms 
+of either: the GNU General Public License as published 
+by the Free Software Foundation; or the Artistic License 
+(unless stated otherwise).
+
+See http://dev.perl.org/licenses/ for more information.
