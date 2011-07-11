@@ -84,29 +84,6 @@ string_concatenate(PyObject *v, PyObject *w)
 template<>
 unsigned long cat<PyStringObject>()
 {
-    //~ PyObject* res = PyString_FromStringAndSize("", 0);
-    //~ int i=0;
-    //~ FOREACH_LINE
-    //~ { if( (++i % 10000) == 0 )printf("%d\n",i);
-    //~ PyObject* ns = PyString_FromString(s), *os = res;
-    //~ Py_INCREF(ns);
-    //~ PyString_ConcatAndDel(&res, ns);
-    /////////////////////////////Py_DECREF(ns);
-    //~ }
-    //~ Py_ssize_t result = PyString_Size(res);
-    //~ Py_DECREF(res);
-    //~ return result;
-
-    //~ PyObject* res = PyString_FromStringAndSize("", 0);
-    //~ FOREACH_LINE
-    //~ {
-    //~ PyObject* ns = PyString_FromString(s);
-    //~ PyString_ConcatAndDel(&res, ns);
-    //~ }
-    //~ Py_ssize_t result = PyString_Size(res);
-    //~ Py_DECREF(res);
-    //~ return result;
-
     PyObject* res = PyString_FromStringAndSize("", 0);
     FOREACH_LINE
     {
