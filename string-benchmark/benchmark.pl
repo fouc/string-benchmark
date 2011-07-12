@@ -20,10 +20,11 @@ my $opt_check           = 0;
 my $opt_output          = '/dev/null';
 my $opt_valgrind        = 0;
 my $opt_verbose         = 0;
-my $opt_discard         = qr/cat-yegorushkin-const-string/; # Just like Python 2.7.1 C String API, boost::const_string is too slow in this context (it does one malloc per call).
+my $opt_discard         = qr/cat-yegorushkin-const-string/
+  ; # Just like Python 2.7.1 C String API, boost::const_string is too slow in this context (it does one malloc per call), skip it.
 
 my $opt_time_format =
-  q{"{ user => %U, real => %e, system => %S, cpu => '%P', text => %X, data => %D, 'max-memory' => %M, 'average-memory' => %K, input => %I, output => %O, major => %F, minor => %R, swaps => %W, pagesize => %Z, 'unvolontary-context-switches' => %c, 'volontary-context-switches' => %w, signals => %k, 'exit-status' => %x, 'average-stack-size' => %p }"};
+  q{'{ user => %U, real => %e, system => %S, cpu => "%P", text => %X, data => %D, "max-memory" => %M, "average-memory" => %K, input => %I, output => %O, major => %F, minor => %R, swaps => %W, pagesize => %Z, "unvolontary-context-switches" => %c, "volontary-context-switches" => %w, signals => %k, "exit-status" => %x, "average-stack-size" => %p }'};
 
 GetOptions(
             'benchmark=s' => \$opt_benchmark,
@@ -74,38 +75,82 @@ sub run
     {
         for my $program ( grep { -x } <$opt_build_directory/$benchmark*> )
         {
-            my $name = basename( $program );
-            if ( $name =~ /$opt_discard/o )
+            my $result = score( $benchmark, $program );
+            if ( $result )
             {
-                say "Skipping $name benchmark, use --discard=None to include";
-                next;
+                push @{ $scores{ $benchmark } }, $result;
             }
-            tie my %score, 'Tie::IxHash',
-              name   => $name,
-              real   => 0,
-              user   => 0,
-              system => 0;
-            for my $input ( @ARGV )
-            {
-                my $time = benckmark( $name, $program, $input );
-                if ( defined $time )
-                {
-                    $score{ real }   += $time->{ real };
-                    $score{ user }   += $time->{ user };
-                    $score{ system } += $time->{ system };
-                    push @{ $score{ details } }, $time;
-                }
-                else
-                {
-                    die
-                      "[ERROR] Failed benchmark $benchmark with $program against $input";
-                }
-            }
-            push @{ $scores{ $benchmark } }, \%score;
         }
     }
 
     report( \%scores );
+}
+
+sub score
+{
+    my ( $benchmark, $program ) = @_;
+
+    my $name = basename( $program );
+    if ( $name =~ /$opt_discard/o )
+    {
+        say "Skipping $name benchmark, use --discard=None to include" and return;
+    }
+
+    tie my %score, 'Tie::IxHash',
+      name   => $name,
+      real   => 0,
+      user   => 0,
+      system => 0;
+
+    for my $input ( @ARGV )
+    {
+        my $time = benckmark( $name, $program, $input );
+        if ( defined $time )
+        {
+            $score{ real }   += $time->{ real };
+            $score{ user }   += $time->{ user };
+            $score{ system } += $time->{ system };
+            push @{ $score{ details } }, $time;
+        }
+        else
+        {
+            die "[ERROR] Failed benchmark $benchmark with $program against $input";
+        }
+    }
+    return \%score;
+}
+
+sub benckmark
+{
+    my ( $name, $program, $input ) = @_;
+
+    say "Running $name against $input";
+
+    my $time_report = "time.$name\_$input";
+    $time_report =~ s/[.\/]/_/g;
+    my $command =
+      "$OS_TIME --format=$opt_time_format --output=$time_report $program < $input $output";
+
+    my @results;
+    for ( 1 .. $opt_repeats )
+    {
+        my $status = system( $command );
+        die
+          "[ERROR] $OS_TIME failed timing $program against $input (exit: $status) command was:\n    \$ $command\n#"
+          if $status;
+        my $result = do $time_report
+          or die
+          "[ERROR] unsupported $OS_TIME format in $time_report, use --time=/path/to/GNU/time";
+        die "[ERROR] $program returned bad status against $input, fix the code"
+          if $result->{ 'exit-status' };
+        push @results, $result;
+    }
+    unlink( $time_report );
+
+    my $time = take_best( @results );
+    $time->{ 'input-data' } = $input;
+    $time->{ 'code-size' }  = -s $program;
+    return $time;
 }
 
 sub report
@@ -120,41 +165,10 @@ sub report
     print 'our ', Dumper $scores;
 }
 
-sub benckmark
-{
-    my ( $name, $program, $input ) = @_;
-
-    say "Running $name against $input";
-
-    my $time_report = "time.$name\_$input";
-    $time_report =~ s/[.\/]/_/g;
-    my $command =
-      "$OS_TIME --format=$opt_time_format --output=$time_report ./$program < $input $output";
-
-    my @results;
-    for ( 1 .. $opt_repeats )
-    {
-        system( $command )
-          and warn "[WARNING] timing $program against $input FAILED"
-          and last;
-        my $result = do $time_report;
-        warn "[WARNING] $program returned BAD STATUS against $input" and last
-          if $result->{ 'exit-status' };
-        push @results, $result;
-    }
-
-    unlink( $time_report );
-
-    my $time = take_best( @results );
-    $time->{ 'input-data' } = $input;
-    $time->{ 'code-size' }  = -s $program;
-    return $time;
-}
-
 sub take_best
 {
     my @times = sort fastest @_;
-    return $times[ 0 ] or undef;
+    return $times[ 0 ];
 }
 
 sub fastest
