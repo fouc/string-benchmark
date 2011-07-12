@@ -37,8 +37,6 @@ GetOptions(
             'hash=s'      => \$OS_HASH
           );
 
-$opt_repeats = 1 if $opt_repeats <= 0;
-
 sub say
 {
     print STDERR "[INFO] @_\n" if $opt_verbose;
@@ -46,6 +44,8 @@ sub say
 
 sub main
 {
+    $opt_repeats = 1 if $opt_repeats <= 0;
+
     my @programs = map {
         grep { -x }
           <$opt_build_directory/$_*>
