@@ -18,7 +18,6 @@ my $opt_repeats         = 3;
 my $opt_build_directory = '.';
 my $opt_check           = 0;
 my $opt_output          = '/dev/null';
-my $opt_valgrind        = 0;
 my $opt_verbose         = 0;
 my $opt_discard         = qr/cat-yegorushkin-const-string/
   ; # Just like Python 2.7.1 C String API, boost::const_string is too slow in this context (it does one malloc per call), skip it.
@@ -38,8 +37,7 @@ GetOptions(
             'hash=s'      => \$OS_HASH
           );
 
-my $output = $opt_check ? "| $OS_HASH 1>&2" : "> $opt_output";
-$opt_repeats = $opt_check ? 1 : $opt_repeats <= 0 ? 1 : $opt_repeats;
+$opt_repeats = 1 if $opt_repeats <= 0;
 
 sub say
 {
@@ -129,14 +127,13 @@ sub benckmark
     my $time_report = "time.$name\_$input";
     $time_report =~ s/[.\/]/_/g;
     my $command =
-      "$OS_TIME --format=$opt_time_format --output=$time_report $program < $input $output";
+      "$OS_TIME --format=$opt_time_format --output=$time_report $program < $input";
 
     my @results;
-    eval
-    {
+    eval {
         for ( 1 .. $opt_repeats )
         {
-            my $status = system( $command );
+            my $status = system( "$command > $opt_output" );
             die "$OS_TIME returned $status.\n"
               if $status;
             my $result = do $time_report
@@ -163,6 +160,12 @@ sub benckmark
         my $time = take_best( @results );
         $time->{ 'input-data' } = $input;
         $time->{ 'code-size' }  = -s $program;
+        if ( $opt_check )
+        {
+            my $checksum = qx[$program < $input | $OS_HASH];
+            $checksum =~ s/ .*//s;
+            $time->{ 'md5' } = $checksum;
+        }
         return $time;
     }
 }
