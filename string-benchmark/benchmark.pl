@@ -132,7 +132,8 @@ sub benckmark
       "$OS_TIME --format=$opt_time_format --output=$time_report $program < $input $output";
 
     my @results;
-    eval {
+    eval
+    {
         for ( 1 .. $opt_repeats )
         {
             my $status = system( $command );
