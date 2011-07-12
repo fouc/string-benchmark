@@ -39,7 +39,7 @@ GetOptions(
           );
 
 my $output = $opt_check ? "| $OS_HASH 1>&2" : "> $opt_output";
-$opt_repeats = 1 if $opt_repeats <= 0;
+$opt_repeats = $opt_check ? 1 : $opt_repeats <= 0 ? 1 : $opt_repeats;
 
 sub say
 {
@@ -132,25 +132,38 @@ sub benckmark
       "$OS_TIME --format=$opt_time_format --output=$time_report $program < $input $output";
 
     my @results;
-    for ( 1 .. $opt_repeats )
-    {
-        my $status = system( $command );
-        die
-          "[ERROR] $OS_TIME failed timing $program against $input (exit: $status) command was:\n    \$ $command\n#"
-          if $status;
-        my $result = do $time_report
-          or die
-          "[ERROR] unsupported $OS_TIME format in $time_report, use --time=/path/to/GNU/time";
-        die "[ERROR] $program returned bad status against $input, fix the code"
-          if $result->{ 'exit-status' };
-        push @results, $result;
-    }
+    eval {
+        for ( 1 .. $opt_repeats )
+        {
+            my $status = system( $command );
+            die "$OS_TIME returned $status.\n"
+              if $status;
+            my $result = do $time_report
+              or die
+              "unsupported $OS_TIME format in $time_report, use --time=/path/to/GNU/time.\n";
+            $status = $result->{ 'exit-status' };
+            die "$program returned $status, fix the code.\n" if $status;
+            push @results, $result;
+        }
+    };
+
     unlink( $time_report );
 
-    my $time = take_best( @results );
-    $time->{ 'input-data' } = $input;
-    $time->{ 'code-size' }  = -s $program;
-    return $time;
+    if ( $@ )
+    {
+        my $message = "[ERROR] $program failed against $input, reason: $@\n";
+
+        $message =~ s/$/# Command was:\n\t\$ $command/ if $opt_verbose;
+
+        die $message;
+    }
+    else
+    {
+        my $time = take_best( @results );
+        $time->{ 'input-data' } = $input;
+        $time->{ 'code-size' }  = -s $program;
+        return $time;
+    }
 }
 
 sub report
