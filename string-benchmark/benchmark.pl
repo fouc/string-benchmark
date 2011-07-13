@@ -20,12 +20,13 @@ my $opt_build_directory = '.';
 my $opt_check           = 0;
 my $opt_output          = '/dev/null';
 my $opt_verbose         = 0;
-my $opt_discard         = qr/cat-yegorushkin-const-string/
-  ; # Just like Python 2.7 C String API, boost::const_string is too slow in this context (it does one malloc per call), skip it.
+my $opt_discard = qr/cat-yegorushkin-const-string/ ; # Does one malloc per call just as PyStringObject::Concat, skip it.
 my $opt_scheduling = '';
 
-my $opt_time_format =
-  q{'{ user => %U, real => %e, system => %S, cpu => "%P", text => %X, data => %D, "max-memory" => %M, "average-memory" => %K, input => %I, output => %O, major => %F, minor => %R, swaps => %W, pagesize => %Z, "unvolontary-context-switches" => %c, "volontary-context-switches" => %w, signals => %k, "exit-status" => %x, "average-stack-size" => %p }'};
+my $opt_time_format = # should eval() to a Perl hash
+  q['{ user => %U, real => %e, system => %S, cpu => "%P", text => %X, data => %D, "max-memory" => %M, "average-memory" => %K,] .
+  q[ input => %I, output => %O, major => %F, minor => %R, swaps => %W, pagesize => %Z, "unvolontary-context-switches" => %c, ] .
+  q[ "volontary-context-switches" => %w, signals => %k, "exit-status" => %x, "average-stack-size" => %p }'];
 
 GetOptions(
             'benchmark=s'       => \$opt_benchmark,
@@ -51,32 +52,38 @@ sub main
     $opt_repeats = 1 if $opt_repeats <= 0;
     $opt_scheduling = "$OS_CHRT --fifo $opt_scheduling " if length $opt_scheduling;
 
-    my @programs = map {
-        grep { -x }
-          <$opt_build_directory/$_*>
-    } grep { /$opt_benchmark/o } @benchmarks;
+    my %programs;
+    my $count = 0;
+
+    for my $benchmark ( @benchmarks )
+    {
+        $count +=
+          @{ $programs{ $benchmark } =
+              [ grep { -x and /$opt_benchmark/o } <$opt_build_directory/$benchmark*> ] };
+    }
 
     die
       "No program(s) found: run (c)make first or specify a build directory with -p build-path\n"
-      unless @programs;
+      unless $count;
 
     die
       "No input file(s): expected some input file names as arguments to feed the benchmarks\n"
       unless map { die "[ERROR] No such file: $_\n" unless -f $_ } @ARGV;
 
-    say 'Benchmarking', scalar @programs, 'programs against', scalar @ARGV,
-      "input ($opt_repeats times each):";
+    say "Benchmarking $count programs against", scalar @ARGV, "input ($opt_repeats times each):";
 
-    run();
+    run( \%programs );
 }
 
 sub run
 {
+    my ( $programs ) = @_;
+
     my %scores;
 
-    for my $benchmark ( grep { /$opt_benchmark/o } @benchmarks )
+    while ( my ( $benchmark, $programs ) = each %$programs )
     {
-        for my $program ( grep { -x } <$opt_build_directory/$benchmark*> )
+        for my $program ( @$programs )
         {
             my $result = score( $benchmark, $program );
             if ( $result )
