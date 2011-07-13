@@ -23,13 +23,17 @@ For a complete support, you will need:
 - chrt
 
 Then, if you're feeling (very) lucky, you can:
-
     $ mkdir build
     $ cd build
     $ cmake ..
     $ make -j4
     $ cd ..
     $ perl benchmark.pl README --path=build --verbose > results.pm
+
+It yields small Perl modules, for alternative output (YAML/JSON/XML):
+    $ perl -MYAML -e'print Dump do "results.pm"'
+    $ perl -MJSON -e'print to_json do "results.pm"'
+    $ perl -MXML::Simple -e'print XMLout do "results.pm"'
 
 This program (and accompanying files) is free software; 
 you can redistribute it and/or modify it under the terms 
