@@ -23,7 +23,7 @@ my $opt_verbose         = 0;
 my $opt_discard = qr/cat-yegorushkin-const-string/ ; # Does one malloc per call just as PyStringObject::Concat, skip it.
 my $opt_scheduling = '';
 
-my $opt_time_format = # should eval() to a Perl hash
+my $opt_time_format = # should eval() to a Perl hash when passed through time(1) --format
   q['{ user => %U, real => %e, system => %S, cpu => "%P", text => %X, data => %D, "max-memory" => %M, "average-memory" => %K,] .
   q[ input => %I, output => %O, major => %F, minor => %R, swaps => %W, pagesize => %Z, "unvolontary-context-switches" => %c, ] .
   q[ "volontary-context-switches" => %w, signals => %k, "exit-status" => %x, "average-stack-size" => %p }'];
