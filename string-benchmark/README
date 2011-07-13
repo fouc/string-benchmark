@@ -23,6 +23,7 @@ For a complete support, you will need:
 - chrt
 
 Then, if you're feeling (very) lucky, you can:
+
     $ mkdir build
     $ cd build
     $ cmake ..
@@ -30,7 +31,8 @@ Then, if you're feeling (very) lucky, you can:
     $ cd ..
     $ perl benchmark.pl README --path=build --verbose > results.pm
 
-It yields small Perl modules, for alternative output (YAML/JSON/XML):
+This yields human-readable Perl modules, for alternative output (YAML/JSON/XML):
+
     $ perl -MYAML -e'print Dump do "results.pm"'
     $ perl -MJSON -e'print to_json do "results.pm"'
     $ perl -MXML::Simple -e'print XMLout do "results.pm"'
