@@ -8,11 +8,11 @@
  * Generic implementation.
  */
 template<typename T>
-unsigned long slice()
+unsigned long slice(benchmark::input& input)
 {
     size_t total = 0, prev = 0, ante = 0;
 
-    FOREACH_LINE
+    BENCHMARK_FOREACH(s)
     {
         T str(s);
 
@@ -43,11 +43,11 @@ unsigned long slice()
  * Python String Object specialization.
  */
 template<>
-unsigned long slice<PyStringObject>()
+unsigned long slice<PyStringObject>(benchmark::input& input)
 {
     size_t total = 0, prev = 0, ante = 0;
 
-    FOREACH_LINE
+    BENCHMARK_FOREACH(s)
     {
         PyObject *str = PyString_FromString(s);
 
@@ -83,11 +83,11 @@ unsigned long slice<PyStringObject>()
  * GC CORD specialization.
  */
 template<>
-unsigned long slice<CORD>()
+unsigned long slice<CORD>(benchmark::input& input)
 {
     size_t total = 0, prev = 0, ante = 0;
 
-    FOREACH_LINE
+    BENCHMARK_FOREACH(s)
     {
         CORD str = CORD_from_char_star(s);
 
@@ -114,8 +114,9 @@ unsigned long slice<CORD>()
 }
 #endif // USE_GC_CORD
 
-int main()
+int main(int argc, char* argv[])
 {
-    printf( "slice: %lu bytes.\n", slice<STR>());
+    BENCHMARK_INPUT_ACQUIRE(data);
+    printf( "slice: %lu bytes.\n", slice<STR>(data));
     return 0;
 }

@@ -5,18 +5,24 @@ Quick C/C++ String Benchmark.
 The third-party and cmake directories contains (awesome) work 
 from Paul Hsieh, Maxim Yegorushkin and Joshua L. Blocher.
 
-Requires:
+In the simplest case(s), requires just a C++ compiler:
 
+    $ c++ string-cat.cpp -DUSE_STD_STRING -o cat-std-string
+    $ ./benchmark.pl README
+
+For a complete support, you will need:
+- g++
+- make
 - cmake
-- Perl
+- Perl + Data::Dumper
 - Python libraries
 - Boehm Garbage Collector + Cord
 - Qt4
 - GNU time
 - md5sum
-- Data::Dumper
+- chrt
 
-So, if you're feeling (very) lucky, you can:
+Then, if you're feeling (very) lucky, you can:
 
     $ mkdir build
     $ cd build

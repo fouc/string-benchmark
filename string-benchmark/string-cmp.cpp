@@ -5,11 +5,11 @@
  * Generic implementation.
  */
 template<typename T>
-void cmp()
+void cmp(benchmark::input& input)
 {
     T cur, prev;
 
-    FOREACH_LINE
+    BENCHMARK_FOREACH(s)
     {
         cur = s;
 
@@ -25,11 +25,11 @@ void cmp()
  * Python String Object specialization.
  */
 template<>
-void cmp<PyStringObject>()
+void cmp<PyStringObject>(benchmark::input& input)
 {
     PyObject *prev = PyString_FromStringAndSize("", 0);
 
-    FOREACH_LINE
+    BENCHMARK_FOREACH(s)
     {
         PyObject *cur = PyString_FromString(s);
         PUTCHAR('0' + _PyString_Eq(cur, prev));
@@ -47,11 +47,11 @@ void cmp<PyStringObject>()
  * GC CORD specialization.
  */
 template<>
-void cmp<CORD>()
+void cmp<CORD>(benchmark::input& input)
 {
     CORD prev = CORD_EMPTY;
 
-    FOREACH_LINE
+    BENCHMARK_FOREACH(s)
     {
         CORD cur = CORD_from_char_star(s);
 
@@ -63,8 +63,9 @@ void cmp<CORD>()
 }
 #endif // USE_GC_CORD
 
-int main()
+int main(int argc, char* argv[])
 {
-    cmp<STR>();
+    BENCHMARK_INPUT_ACQUIRE(data);
+    cmp<STR>(data);
     return 0;
 }

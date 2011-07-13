@@ -20,7 +20,7 @@ my $opt_build_directory = '.';
 my $opt_check           = 0;
 my $opt_output          = '/dev/null';
 my $opt_verbose         = 0;
-my $opt_discard = qr/cat-yegorushkin-const-string/ ; # Does one malloc per call just as PyStringObject::Concat, skip it.
+my $opt_discard = qr/cat-yegorushkin-const-string/ ; # Is quadratic in this context, just as PyStringObject::Concat, skip it.
 my $opt_scheduling = '';
 
 my $opt_time_format = # should eval() to a Perl hash when passed through time(1) --format
@@ -32,7 +32,7 @@ GetOptions(
             'benchmark=s'       => \$opt_benchmark,
             'repeats=i'         => \$opt_repeats,
             'path=s'            => \$opt_build_directory,
-            'check!'            => \$opt_check,
+            'checksum!'         => \$opt_check,
             'output=s'          => \$opt_output,
             'discard=s'         => \$opt_discard,
             'verbose!'          => \$opt_verbose,
@@ -40,7 +40,7 @@ GetOptions(
             'time=s'            => \$OS_TIME,
             'hash=s'            => \$OS_HASH,
             'chrt=s'            => \$OS_CHRT
-          );
+          ) or die "Bad arguments.\n";
 
 sub say
 {
@@ -139,7 +139,7 @@ sub benckmark
     my $time_report = "time.$name\_$input";
     $time_report =~ s/[.\/]/_/g;
     my $command =
-      "$opt_scheduling$OS_TIME --format=$opt_time_format --output=$time_report $program < $input";
+      "$opt_scheduling$OS_TIME --format=$opt_time_format --output=$time_report $program $input";
 
     my @results;
     eval {
@@ -174,7 +174,7 @@ sub benckmark
         $time->{ 'code-size' }  = -s $program;
         if ( $opt_check )
         {
-            my $checksum = qx[$program < $input | $OS_HASH];
+            my $checksum = qx[$program $input | $OS_HASH];
             $checksum =~ s/ .*//s;
             $time->{ 'md5' } = $checksum;
         }

@@ -10,11 +10,11 @@
  * Generic implementation.
  */
 template<typename T>
-unsigned long cat()
+unsigned long cat(benchmark::input& input)
 {
     T res;
 
-    FOREACH_LINE
+    BENCHMARK_FOREACH(s)
     {
         res += s;
     }
@@ -29,8 +29,8 @@ unsigned long cat()
  * See Python/ceval.c
  *
  * When Python encounters an expression of the form (x += y)
- * where both x and y are strings, it compiles it down to an
- * INPLACE_ADD opcode, effectively bypassing the string API
+ * it compiles it down to an INPLACE_ADD opcode, if both x 
+ * and y are strings, this effectively bypasses the string API
  * PyString_Concat / PyString_ConcatAndDel methods.
  * INPLACE_ADD comes down to this function in ceval.c, which
  * tremendously improves performance when called on strings.
@@ -82,10 +82,11 @@ string_concatenate(PyObject *v, PyObject *w)
  * Python String Object specialization.
  */
 template<>
-unsigned long cat<PyStringObject>()
+unsigned long cat<PyStringObject>(benchmark::input& input)
 {
     PyObject* res = PyString_FromStringAndSize("", 0);
-    FOREACH_LINE
+
+    BENCHMARK_FOREACH(s)
     {
         PyObject* ns = PyString_FromString(s);
         if ((res = string_concatenate(res, ns)) == NULL)
@@ -105,11 +106,11 @@ unsigned long cat<PyStringObject>()
  * GC CORD specialization.
  */
 template<>
-unsigned long cat<CORD>()
+unsigned long cat<CORD>(benchmark::input& input)
 {
     CORD res = CORD_EMPTY;
 
-    FOREACH_LINE
+    BENCHMARK_FOREACH(s)
     {
         res = CORD_cat(res, CORD_from_char_star(s));
     }
@@ -118,8 +119,9 @@ unsigned long cat<CORD>()
 }
 #endif // USE_GC_CORD
 
-int main()
+int main(int argc, char* argv[])
 {
-    printf( "cat: %lu bytes.\n", cat<STR>());
+    BENCHMARK_INPUT_ACQUIRE(data);
+    printf( "cat: %lu bytes.\n", cat<STR>(data));
     return 0;
 }
