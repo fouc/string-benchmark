@@ -7,9 +7,6 @@ use Getopt::Long;
 use File::Basename;
 use Tie::IxHash;
 use Data::Dumper;
-use POSIX;
-
-use constant PAGESIZE => POSIX::sysconf(POSIX::_SC_PAGESIZE);
 
 my @benchmarks = qw(cat cmp slice);
 
@@ -71,8 +68,7 @@ sub main
 
     die
       "No input file(s): expected some input file names as arguments to feed the benchmarks\n"
-      unless map { die  "[ERROR] No such file: $_\n" unless -f $_; 
-                   warn "[WARNING] $_ size is on a page boundary, risk of buffer overrun.\n" if( (-s $_) % PAGESIZE == 0); } @ARGV;
+      unless map { die  "[ERROR] No such file: $_\n" unless -f $_; } @ARGV;
 
     say "Benchmarking $count programs against", scalar @ARGV, "input ($opt_repeats times each):";
 

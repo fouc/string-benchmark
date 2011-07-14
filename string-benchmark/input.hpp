@@ -45,7 +45,7 @@ public:
             exit(errno);
         }
 
-        m_begin = static_cast<iterator>(mmap(0, buf.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, m_fd, 0));
+        m_begin = static_cast<iterator>(mmap(0, buf.st_size, PROT_READ, MAP_PRIVATE, m_fd, 0));
         if (m_begin == iterator(-1))
         {
             exit(errno);
@@ -67,10 +67,10 @@ public:
 
     inline record next_()
     {
-        assert( m_position <= m_end );
+        assert(m_position <= m_end);
         const iterator at = m_position;
 
-        m_position = static_cast<const iterator>(memchr(m_position, '\n', m_end - m_position));
+        m_position = static_cast<const iterator>(memchr(m_position, '\0', m_end - m_position));
         if (m_position == 0)
         {
             m_position = m_end;
@@ -79,7 +79,7 @@ public:
         const record result = std::make_pair(at, m_position - at);
         if (not eof_())
         {
-            *m_position++ = '\0'; // tokenize and skip new line
+            ++m_position; // skip separator
         }
         return result;
     }
