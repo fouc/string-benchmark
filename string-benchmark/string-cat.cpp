@@ -91,7 +91,7 @@ unsigned long cat<PyStringObject>(benchmark::input& input)
         PyObject* ns = PyString_FromString(s);
         if ((res = string_concatenate(res, ns)) == NULL)
         {
-            exit(-1);
+            exit(ECANCELED);
         }
         Py_DECREF(ns);
     }

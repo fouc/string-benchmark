@@ -34,7 +34,7 @@ long iterations(const char* const argv)
     const long iter = labs(strtol(argv, 0, 10));
     if (iter == 0 or errno)
     {
-        exit(-1);
+        exit(EINVAL);
     }
     return iter;
 }
@@ -61,6 +61,11 @@ public:
 
         m_end = m_begin + buf.st_size;
         m_position = m_begin;
+
+        if (m_end <= m_begin or m_end[-1] != '\0')
+        {
+            exit(EFBIG); // file must be non-empty and last byte must be NUL.
+        }
     }
 
     inline bool eof_() const
@@ -75,21 +80,16 @@ public:
 
     inline record next_()
     {
-        assert(m_position <= m_end);
         const iterator at = m_position;
-
-        m_position = static_cast<const iterator>(memchr(m_position, '\0', m_end - m_position));
-        if (m_position == 0)
+        if (at < m_end)
         {
-            m_position = m_end;
+            m_position = static_cast<const iterator>(rawmemchr(m_position, '\0'));
+            if (m_position == 0)
+            {
+                m_position = m_end;
+            }
         }
-
-        const record result = std::make_pair(at, m_position - at);
-        if (not eof_())
-        {
-            ++m_position; // skip separator
-        }
-        return result;
+        return std::make_pair(at, m_position++ - at);
     }
 
     ~input()
