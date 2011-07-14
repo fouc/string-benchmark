@@ -16,6 +16,7 @@ my $OS_CHRT = '/usr/bin/chrt';
 
 my $opt_benchmark       = qr/.*/;
 my $opt_repeats         = 3;
+my $opt_iterations      = 1;
 my $opt_build_directory = '.';
 my $opt_check           = 0;
 my $opt_output          = '/dev/null';
@@ -31,6 +32,7 @@ my $opt_time_format = # should eval() to a Perl hash when passed through time(1)
 GetOptions(
             'benchmark=s'       => \$opt_benchmark,
             'repeats=i'         => \$opt_repeats,
+            'iterations=i'      => \$opt_iterations,
             'path=s'            => \$opt_build_directory,
             'checksum!'         => \$opt_check,
             'output=s'          => \$opt_output,
@@ -50,6 +52,7 @@ sub say
 sub main
 {
     $opt_repeats = 1 if $opt_repeats <= 0;
+    $opt_iterations = 1 if $opt_repeats <= 0;
     $opt_scheduling = "$OS_CHRT --fifo $opt_scheduling " if length $opt_scheduling;
 
     my %programs;
@@ -70,7 +73,7 @@ sub main
       "No input file(s): expected some input file names as arguments to feed the benchmarks\n"
       unless map { die  "[ERROR] No such file: $_\n" unless -f $_; } @ARGV;
 
-    say "Benchmarking $count programs against", scalar @ARGV, "input ($opt_repeats times each):";
+    say "Benchmarking $count programs against", scalar @ARGV, "input (${opt_repeats}x$opt_iterations times each):";
 
     run( \%programs );
 }
@@ -139,7 +142,7 @@ sub benckmark
     my $time_report = "time.$name\_$input";
     $time_report =~ s/[.\/]/_/g;
     my $command =
-      "$opt_scheduling$OS_TIME --format=$opt_time_format --output=$time_report $program $input";
+      "$opt_scheduling$OS_TIME --format=$opt_time_format --output=$time_report $program $input $opt_iterations";
 
     my @results;
     eval {
@@ -174,7 +177,7 @@ sub benckmark
         $time->{ 'code-size' }  = -s $program;
         if ( $opt_check )
         {
-            my $checksum = qx[$program $input | $OS_HASH];
+            my $checksum = qx[$program $input $opt_iterations | $OS_HASH];
             $checksum =~ s/ .*//s;
             $time->{ 'md5' } = $checksum;
         }

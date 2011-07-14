@@ -15,8 +15,10 @@
 
 #include <unistd.h>
 
-#define BENCHMARK_INPUT_ACQUIRE(data) if(argc < 2) { exit(-1); } benchmark::input data(argv[1]);
-#define BENCHMARK_FOREACH(cstring)    for(const char *cstring; not input.eof_() and (cstring = input.next_().first); /* Empty */)
+#define BENCHMARK_ACQUIRE_INPUT(data)  if(argc < 2) { exit(-1); } benchmark::input data(argv[1]);
+#define BENCHMARK_GET_ITERATIONS(iter) long iter = (argc > 2) ? benchmark::iterations(argv[2]) : 1;
+#define BENCHMARK_ITERATE(input, iter) for (int i_ = 0; i_ < iter; ++i_, input.reset_())
+#define BENCHMARK_FOREACH(cstring)     for(const char *cstring; not input.eof_() and (cstring = input.next_().first); /* Empty */)
 
 #if _POSIX_C_SOURCE >= 1 or _XOPEN_SOURCE or _POSIX_SOURCE or _BSD_SOURCE or _SVID_SOURCE
 #define PUTCHAR putchar_unlocked
@@ -26,6 +28,17 @@
 
 namespace benchmark
 {
+
+long iterations(const char * const argv)
+{
+    const long iter = labs(strtol(argv, 0, 10));
+    if (iter == 0 or errno)
+    {
+        exit(-1);
+    }
+    return iter;
+}
+
 class input
 {
 public:

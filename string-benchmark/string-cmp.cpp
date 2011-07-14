@@ -65,7 +65,11 @@ void cmp<CORD>(benchmark::input& input)
 
 int main(int argc, char* argv[])
 {
-    BENCHMARK_INPUT_ACQUIRE(data);
-    cmp<STR>(data);
+    BENCHMARK_GET_ITERATIONS(iterations);
+    BENCHMARK_ACQUIRE_INPUT(input);
+    BENCHMARK_ITERATE(input, iterations)
+    {
+        cmp<STR>(input);
+    }
     return 0;
 }

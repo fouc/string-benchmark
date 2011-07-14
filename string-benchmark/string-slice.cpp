@@ -116,7 +116,11 @@ unsigned long slice<CORD>(benchmark::input& input)
 
 int main(int argc, char* argv[])
 {
-    BENCHMARK_INPUT_ACQUIRE(data);
-    printf( "slice: %lu bytes.\n", slice<STR>(data));
+    BENCHMARK_GET_ITERATIONS(iterations);
+    BENCHMARK_ACQUIRE_INPUT(input);
+    BENCHMARK_ITERATE(input, iterations)
+    {
+        printf( "slice: %lu bytes.\n", slice<STR>(input));
+    }
     return 0;
 }

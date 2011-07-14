@@ -121,7 +121,11 @@ unsigned long cat<CORD>(benchmark::input& input)
 
 int main(int argc, char* argv[])
 {
-    BENCHMARK_INPUT_ACQUIRE(data);
-    printf( "cat: %lu bytes.\n", cat<STR>(data));
+    BENCHMARK_GET_ITERATIONS(iterations);
+    BENCHMARK_ACQUIRE_INPUT(input);
+    BENCHMARK_ITERATE(input, iterations)
+    {
+        printf( "cat: %lu bytes.\n", cat<STR>(input));
+    }
     return 0;
 }
