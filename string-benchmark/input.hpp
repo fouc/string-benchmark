@@ -29,7 +29,7 @@
 namespace benchmark
 {
 
-long iterations(const char * const argv)
+long iterations(const char* const argv)
 {
     const long iter = labs(strtol(argv, 0, 10));
     if (iter == 0 or errno)
@@ -47,13 +47,8 @@ public:
 
     input(const char* const file_name) : m_fd(open(file_name, O_RDONLY))
     {
-        if (m_fd == -1)
-        {
-            exit(errno);
-        }
-
         struct stat buf;
-        if (fstat(m_fd, &buf) == -1)
+        if (m_fd == -1 or fstat(m_fd, &buf) == -1)
         {
             exit(errno);
         }

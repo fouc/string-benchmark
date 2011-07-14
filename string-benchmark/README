@@ -2,7 +2,7 @@
 Quick C/C++ String Benchmark.
 =====
 
-The third-party and cmake directories contains (awesome) work 
+The third-party and cmake directories contain (awesome) work 
 from Paul Hsieh, Maxim Yegorushkin and Joshua L. Blocher.
 
 In the simplest case(s), requires just a C++ compiler:
@@ -31,7 +31,13 @@ Then, if you're feeling (very) lucky, you can:
     $ cd ..
     $ perl benchmark.pl README --path=build --verbose > results.pm
 
-This yields human-readable Perl modules, for alternative output (YAML/JSON/XML):
+Benchmark input consists of '\0' separated strings, 
+it can be easily generated with:
+
+    $ find -print0
+
+The program yields human-readable Perl modules,
+for alternative formats (YAML/JSON/XML):
 
     $ perl -MYAML -e'print Dump do "results.pm"'
     $ perl -MJSON -e'print to_json do "results.pm"'
