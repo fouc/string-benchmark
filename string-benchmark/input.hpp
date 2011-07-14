@@ -89,7 +89,7 @@ public:
                 m_position = m_end;
             }
         }
-        return std::make_pair(at, m_position++ - at);
+        return record(at, m_position++ - at);
     }
 
     ~input()
