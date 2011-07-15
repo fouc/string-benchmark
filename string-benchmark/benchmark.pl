@@ -23,6 +23,7 @@ my $opt_output          = '/dev/null';
 my $opt_verbose         = 0;
 my $opt_discard = qr/cat-yegorushkin-const-string/ ; # Is quadratic in this context, just as PyStringObject::Concat, skip it.
 my $opt_scheduling = '';
+my $opt_valgrind = 0;
 
 my $opt_time_format = # should eval() to a Perl hash when passed through time(1) --format
   q['{ user => %U, real => %e, system => %S, cpu => "%P", text => %X, data => %D, "max-memory" => %M, "average-memory" => %K,] .
@@ -39,6 +40,7 @@ GetOptions(
             'discard=s'         => \$opt_discard,
             'verbose!'          => \$opt_verbose,
             'fifo-scheduling=i' => \$opt_scheduling,
+            'grind!'            => \$opt_valgrind,
             'time=s'            => \$OS_TIME,
             'hash=s'            => \$OS_HASH,
             'chrt=s'            => \$OS_CHRT
@@ -52,7 +54,7 @@ sub say
 sub main
 {
     $opt_repeats = 1 if $opt_repeats <= 0;
-    $opt_iterations = 1 if $opt_repeats <= 0;
+    $opt_iterations = 1 if $opt_iterations <= 0;
     $opt_scheduling = "$OS_CHRT --fifo $opt_scheduling " if length $opt_scheduling;
 
     my %programs;
@@ -181,6 +183,10 @@ sub benckmark
             $checksum =~ s/ .*//s;
             $time->{ 'md5' } = $checksum;
         }
+        if ( $opt_valgrind )
+        {
+            $time->{ 'valgrind' } = valgrind("$program $input $opt_iterations");
+        }
         return $time;
     }
 }
@@ -212,6 +218,20 @@ sub fastest
               : $a->{ user } <=> $b->{ user }
         : $a->{ real } <=> $b->{ real }
     );
+}
+
+sub valgrind
+{
+    my ( $command ) = @_;
+
+    my $report = qx[valgrind $command 2>&1];
+
+    return
+      if $?
+          or not my @valgrind = map { s/,//g; int($_) }
+          ( $report =~ /total heap usage: *(.*?) *allocs, *(.*?) *frees, *(.*?) *bytes/g );
+
+    return \@valgrind;
 }
 
 main();

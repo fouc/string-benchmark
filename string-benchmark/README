@@ -7,8 +7,10 @@ from Paul Hsieh, Maxim Yegorushkin and Joshua L. Blocher.
 
 In the simplest case(s), requires just a C++ compiler:
 
-    $ c++ string-cat.cpp -DUSE_STD_STRING -o cat-std-string
-    $ ./benchmark.pl README
+    $ c++ string-cat.cpp -o cat-std-string -DUSE_STD_STRING
+    $ c++ string-cat.cpp -o cat-cst-string -DUSE_CONST_STRING -Ithird-party
+    $ find -print0 > DATA
+    $ ./benchmark.pl DATA
 
 For a complete support, you will need:
 - g++
