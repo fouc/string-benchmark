@@ -231,7 +231,7 @@ sub valgrind
           or not my @valgrind = map { s/,//g; int($_) }
           ( $report =~ /total heap usage: *(.*?) *allocs, *(.*?) *frees, *(.*?) *bytes/g );
 
-    return \@valgrind;
+    return { malloc => $valgrind[0], free => $valgrind[1], total => $valgrind[2] };
 }
 
 main();
