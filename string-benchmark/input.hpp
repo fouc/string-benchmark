@@ -83,11 +83,7 @@ public:
         const iterator at = m_position;
         if (at < m_end)
         {
-            m_position = static_cast<const iterator>(rawmemchr(m_position, '\0'));
-            if (m_position == 0)
-            {
-                m_position = m_end;
-            }
+            m_position += strlen(m_position);
         }
         return record(at, m_position++ - at);
     }
