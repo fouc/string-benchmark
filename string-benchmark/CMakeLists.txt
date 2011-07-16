@@ -20,7 +20,7 @@ endif()
 add_library( bstring SHARED third-party/bstrlib/bstrwrap.cpp third-party/bstrlib/bstrlib.c )
 
 ## Add new benchmarks here:
-set(benchmarks cat cmp slice)
+set(benchmarks new cat cmp slice)
 
 foreach(benchmark ${benchmarks})
     ## Python String Object

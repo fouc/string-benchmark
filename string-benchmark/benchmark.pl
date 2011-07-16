@@ -8,7 +8,7 @@ use File::Basename;
 use Tie::IxHash;
 use Data::Dumper;
 
-my @benchmarks = qw(cat cmp slice);
+my @benchmarks = qw(new cat cmp slice);
 
 my $OS_TIME = '/usr/bin/time';
 my $OS_HASH = '/usr/bin/md5sum';
