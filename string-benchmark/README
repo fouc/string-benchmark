@@ -10,14 +10,15 @@ In the simplest case(s), requires just a C++ compiler:
     $ c++ string-cat.cpp -o cat-std-string -DUSE_STD_STRING
     $ c++ string-cat.cpp -o cat-cst-string -DUSE_CONST_STRING -Ithird-party
     $ find -print0 > DATA
-    $ ./benchmark.pl DATA
+    $ ./cat-std-string DATA
 
-For a complete support, you will need:
+To build the 40 programs, you will need:
 - g++
 - make
 - cmake
 - Perl + Data::Dumper
 - Python libraries
+- Perl libraries
 - Boehm Garbage Collector + Cord
 - Qt4
 - GNU time
@@ -31,7 +32,7 @@ Then, if you're feeling (very) lucky, you can:
     $ cmake ..
     $ make -j4
     $ cd ..
-    $ perl benchmark.pl README --path=build --verbose > results.pm
+    $ perl benchmark.pl DATA1 DATA2 ... --path=build --verbose > results.pm
 
 Benchmark input consists of '\0' separated strings, 
 it can be easily generated with:
