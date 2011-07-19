@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cstring>
 
+BENCHMARK_GLOBALS;
+
 /**
  * Generic implementation.
  */
@@ -78,6 +80,78 @@ unsigned long slice<PyStringObject>(benchmark::input& input)
 }
 #endif // USE_PYTHON_STRING
 
+#ifdef USE_PERL_STRING
+/**
+ * See mg.c
+ * This is substr (as rvalue).
+ */
+int Perl_magic_getsubstr(SV *sv, MAGIC *)
+{
+    dTHX; /* fetch context */
+
+    STRLEN len;
+    SV * const lsv = LvTARG(sv);
+    const char * const tmps = SvPV_const(lsv,len);
+    STRLEN offs = LvTARGOFF(sv);
+    STRLEN rem = LvTARGLEN(sv);
+
+    if (SvUTF8(lsv))
+        exit(-1); // Should not happen
+    if (offs > len)
+        offs = len;
+    if (rem > len - offs)
+        rem = len - offs;
+    sv_setpvn(sv, tmps + offs, rem);
+    if (SvUTF8(lsv))
+        SvUTF8_on(sv);
+    return 0;
+}
+
+/**
+ * Perl scalar specialization.
+ * Emulates slicing with a pseudo call to substr.
+ */
+template<>
+unsigned long slice<SV>(benchmark::input& input)
+{
+    dTHX; /* fetch context */
+
+    size_t total = 0, prev = 0, ante = 0;
+
+    SV* const slice_args = sv_2mortal(newSV_type(SVt_PVLV));
+
+    BENCHMARK_FOREACH(s)
+    {
+        SV* str = newSVpv(s, 0);
+
+        size_t cur = SvCUR(str);
+        if (cur != 0)
+        {
+            size_t from = prev % cur;
+            size_t to   = ante % cur;
+
+            if (from > to)
+            {
+                std::swap(from, to);
+            }
+
+            LvTARG(slice_args) = SvREFCNT_inc_simple(str);
+            LvTARGOFF(slice_args) = from;
+            LvTARGLEN(slice_args) = (to - from);
+            Perl_magic_getsubstr(slice_args, 0);
+
+            total += SvCUR(slice_args);
+        }
+        ante = prev;
+        prev = cur;
+
+        SvREFCNT_dec(str);
+    }
+
+    return total;
+}
+#endif // USE_PERL_STRING
+
 #ifdef USE_GC_CORD
 /**
  * GC CORD specialization.
@@ -116,11 +190,13 @@ unsigned long slice<CORD>(benchmark::input& input)
 
 int main(int argc, char* argv[])
 {
+    BENCHMARK_INIT;
     BENCHMARK_GET_ITERATIONS(iterations);
     BENCHMARK_ACQUIRE_INPUT(input);
     BENCHMARK_ITERATE(input, iterations)
     {
         printf( "slice: %lu bytes.\n", slice<STR>(input));
     }
+    BENCHMARK_FINISH;
     return 0;
 }

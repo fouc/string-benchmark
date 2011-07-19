@@ -1,13 +1,15 @@
 
 #include "config.hpp"
 
+BENCHMARK_GLOBALS;
+
 /**
  * Generic implementation.
  */
 template<typename T>
 unsigned long build(benchmark::input& input)
 {
-    unsigned long res;
+    unsigned long res = 0;
 
     BENCHMARK_FOREACH(s)
     {
@@ -25,7 +27,7 @@ unsigned long build(benchmark::input& input)
 template<>
 unsigned long build<PyStringObject>(benchmark::input& input)
 {
-    unsigned long res;
+    unsigned long res = 0;
 
     BENCHMARK_FOREACH(s)
     {
@@ -37,6 +39,27 @@ unsigned long build<PyStringObject>(benchmark::input& input)
 }
 #endif // USE_PYTHON_STRING
 
+#ifdef USE_PERL_STRING
+/**
+ * Perl scalar specialization.
+ */
+template<>
+unsigned long build<SV>(benchmark::input& input)
+{
+    dTHX; /* fetch context */
+
+    unsigned long res = 0;
+
+    BENCHMARK_FOREACH(s)
+    {
+        SV* str = newSVpv(s, 0);
+        res += SvCUR(str);
+        SvREFCNT_dec(str);
+    }
+    return res;
+}
+#endif // USE_PERL_STRING
+
 #ifdef USE_GC_CORD
 /**
  * GC CORD specialization.
@@ -44,7 +67,7 @@ unsigned long build<PyStringObject>(benchmark::input& input)
 template<>
 unsigned long build<CORD>(benchmark::input& input)
 {
-    unsigned long res;
+    unsigned long res = 0;
 
     BENCHMARK_FOREACH(s)
     {
@@ -58,11 +81,13 @@ unsigned long build<CORD>(benchmark::input& input)
 
 int main(int argc, char* argv[])
 {
+    BENCHMARK_INIT;
     BENCHMARK_GET_ITERATIONS(iterations);
     BENCHMARK_ACQUIRE_INPUT(input);
     BENCHMARK_ITERATE(input, iterations)
     {
         printf( "build: %lu bytes.\n", build<STR>(input));
     }
+    BENCHMARK_FINISH;
     return 0;
 }

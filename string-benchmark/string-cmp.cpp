@@ -1,5 +1,9 @@
 
+#include <algorithm> // for max
+
 #include "config.hpp"
+
+BENCHMARK_GLOBALS;
 
 /**
  * Generic implementation.
@@ -42,6 +46,49 @@ void cmp<PyStringObject>(benchmark::input& input)
 }
 #endif // USE_PYTHON_STRING
 
+#ifdef USE_PERL_STRING
+/**
+ * See util.c
+ */
+I32 Perl_foldEQ(const char *s1, const char *s2, register I32 len)
+{
+    register const U8 *a = (const U8 *)s1;
+    register const U8 *b = (const U8 *)s2;
+
+    while (len--)
+    {
+        if (*a != *b && *a != PL_fold[*b])
+            return 0;
+        a++,b++;
+    }
+    return 1;
+}
+
+/**
+ * Perl scalar specialization.
+ */
+template<>
+void cmp<SV>(benchmark::input& input)
+{
+    dTHX; /* fetch context */
+
+    SV* prev = newSV(0);
+
+    BENCHMARK_FOREACH(s)
+    {
+        SV* cur = newSVpv(s, 0);
+        STRLEN s1_len, s2_len;
+        const char* const s1 = SvPV(cur, s1_len);
+        const char* const s2 = SvPV(prev, s2_len);
+        PUTCHAR('0' + Perl_foldEQ(s1, s2, std::max(s1_len, s2_len)));
+        PUTCHAR('\n');
+        SvREFCNT_dec(prev);
+        prev = cur;
+    }
+    SvREFCNT_dec(prev);
+}
+#endif // USE_PERL_STRING
+
 #ifdef USE_GC_CORD
 /**
  * GC CORD specialization.
@@ -65,11 +112,13 @@ void cmp<CORD>(benchmark::input& input)
 
 int main(int argc, char* argv[])
 {
+    BENCHMARK_INIT;
     BENCHMARK_GET_ITERATIONS(iterations);
     BENCHMARK_ACQUIRE_INPUT(input);
     BENCHMARK_ITERATE(input, iterations)
     {
         cmp<STR>(input);
     }
+    BENCHMARK_FINISH;
     return 0;
 }

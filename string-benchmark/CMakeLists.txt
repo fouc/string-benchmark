@@ -6,11 +6,12 @@ project (bytestring-benchmark)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH}) ## Find BoehmGC
 
 find_package(PythonLibs)
+find_package(PerlLibs)
 find_package(BoehmGC REQUIRED)
 find_package(Qt4 4.4.3 COMPONENTS QtCore REQUIRED)
 include(${QT_USE_FILE})
 
-include_directories( ${PYTHON_INCLUDE_DIRS} ${BOEHMGC_INCLUDE_DIRS} ${CORD_INCLUDE_DIRS} third-party third-party/bstrlib )
+include_directories( ${PYTHON_INCLUDE_DIRS} ${PERL_INCLUDE_PATH} ${BOEHMGC_INCLUDE_DIRS} ${CORD_INCLUDE_DIRS} third-party third-party/bstrlib )
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic")
@@ -23,11 +24,6 @@ add_library( bstring SHARED third-party/bstrlib/bstrwrap.cpp third-party/bstrlib
 set(benchmarks new cat cmp slice)
 
 foreach(benchmark ${benchmarks})
-    ## Python String Object
-    add_executable( ${benchmark}-python-string "string-${benchmark}.cpp" )
-    set_target_properties( ${benchmark}-python-string PROPERTIES COMPILE_FLAGS -DUSE_PYTHON_STRING )
-    target_link_libraries( ${benchmark}-python-string ${PYTHON_LIBRARIES})
-    
     ## std::string
     add_executable( ${benchmark}-std-string "string-${benchmark}.cpp" )
     set_target_properties( ${benchmark}-std-string PROPERTIES COMPILE_FLAGS -DUSE_STD_STRING )
@@ -37,11 +33,21 @@ foreach(benchmark ${benchmarks})
     set_target_properties( ${benchmark}-std-string-gc PROPERTIES COMPILE_FLAGS -DUSE_STD_STRING_GC )
     target_link_libraries( ${benchmark}-std-string-gc ${BOEHMGC_LIBRARIES})
 
+    ## Python String Object
+    add_executable( ${benchmark}-python-string "string-${benchmark}.cpp" )
+    set_target_properties( ${benchmark}-python-string PROPERTIES COMPILE_FLAGS -DUSE_PYTHON_STRING )
+    target_link_libraries( ${benchmark}-python-string ${PYTHON_LIBRARIES})
+
+    ## Perl scalars
+    add_executable( ${benchmark}-perl-string "string-${benchmark}.cpp" )
+    set_target_properties( ${benchmark}-perl-string PROPERTIES COMPILE_FLAGS -DUSE_PERL_STRING )
+    target_link_libraries( ${benchmark}-perl-string ${PERL_LIBRARY})
+
     if(CMAKE_COMPILER_IS_GNUCXX)
         ## __gnu_cxx::rope
         add_executable( ${benchmark}-ext-rope "string-${benchmark}.cpp" )
         set_target_properties( ${benchmark}-ext-rope PROPERTIES COMPILE_FLAGS -DUSE_EXT_ROPE )
-	target_link_libraries( ${benchmark}-ext-rope ${BOEHMGC_LIBRARIES})
+        target_link_libraries( ${benchmark}-ext-rope ${BOEHMGC_LIBRARIES})
     endif()
 
     ## BoehmGC CORD

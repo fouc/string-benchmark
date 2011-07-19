@@ -1,14 +1,6 @@
 
 /* Each benchmark must define an appropriate STR type. */
 
-#ifdef USE_PYTHON_STRING
-extern "C"
-{
-#include <Python.h>
-}
-typedef PyStringObject STR;
-#endif // USE_PYTHON_STRING
-
 #ifdef USE_STD_STRING
 #include <string>
 typedef std::string STR;
@@ -19,6 +11,25 @@ typedef std::string STR;
 #include <gc/gc_allocator.h>
 typedef std::basic_string< char, std::char_traits<char>, gc_allocator<char> > STR;
 #endif // USE_STD_STRING_GC
+
+#ifdef USE_PYTHON_STRING
+#include <Python.h>
+typedef PyStringObject STR;
+#endif // USE_PYTHON_STRING
+
+#ifdef USE_PERL_STRING
+#define PERL_NO_GET_CONTEXT /* we want efficiency */
+#include <EXTERN.h>
+#include <perl.h>
+typedef SV STR;
+#define BENCHMARK_GLOBALS static PerlInterpreter *my_perl;
+#define BENCHMARK_INIT    PERL_SYS_INIT(&argc, &argv);     \
+                          my_perl = perl_alloc();          \
+                          perl_construct(my_perl);
+#define BENCHMARK_FINISH  perl_destruct(my_perl); \
+                          perl_free(my_perl);     \
+                          PERL_SYS_TERM();
+#endif // USE_PERL_STRING
 
 #ifdef USE_EXT_ROPE
 #include <ext/rope>
@@ -90,3 +101,15 @@ typedef NullString STR;
 #endif // USE_NOTHING
 
 #include "input.hpp"
+
+#ifndef BENCHMARK_GLOBALS
+#define BENCHMARK_GLOBALS
+#endif // BENCHMARK_GLOBALS
+
+#ifndef BENCHMARK_INIT
+#define BENCHMARK_INIT
+#endif // BENCHMARK_INIT
+
+#ifndef BENCHMARK_FINISH
+#define BENCHMARK_FINISH
+#endif // BENCHMARK_FINISH

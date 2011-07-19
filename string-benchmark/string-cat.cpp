@@ -6,6 +6,8 @@
 #include "boost/const_string/concatenation.hpp"
 #endif // USE_CONST_STRING
 
+BENCHMARK_GLOBALS;
+
 /**
  * Generic implementation.
  */
@@ -29,7 +31,7 @@ unsigned long cat(benchmark::input& input)
  * See Python/ceval.c
  *
  * When Python encounters an expression of the form (x += y)
- * it compiles it down to an INPLACE_ADD opcode, if both x 
+ * it compiles it down to an INPLACE_ADD opcode, if both x
  * and y are strings, this effectively bypasses the string API
  * PyString_Concat / PyString_ConcatAndDel methods.
  * INPLACE_ADD comes down to this function in ceval.c, which
@@ -101,6 +103,27 @@ unsigned long cat<PyStringObject>(benchmark::input& input)
 }
 #endif // USE_PYTHON_STRING
 
+#ifdef USE_PERL_STRING
+/**
+ * Perl scalar specialization.
+ */
+template<>
+unsigned long cat<SV>(benchmark::input& input)
+{
+    dTHX; /* fetch context */
+
+    SV* res = newSV(0);
+
+    BENCHMARK_FOREACH(s)
+    {
+        sv_catpv(res, s);
+    }
+    STRLEN result = SvCUR(res);
+    SvREFCNT_dec(res);
+    return result;
+}
+#endif // USE_PERL_STRING
+
 #ifdef USE_GC_CORD
 /**
  * GC CORD specialization.
@@ -121,11 +144,13 @@ unsigned long cat<CORD>(benchmark::input& input)
 
 int main(int argc, char* argv[])
 {
+    BENCHMARK_INIT;
     BENCHMARK_GET_ITERATIONS(iterations);
     BENCHMARK_ACQUIRE_INPUT(input);
     BENCHMARK_ITERATE(input, iterations)
     {
         printf( "cat: %lu bytes.\n", cat<STR>(input));
     }
+    BENCHMARK_FINISH;
     return 0;
 }
