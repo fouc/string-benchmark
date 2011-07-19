@@ -1,8 +1,6 @@
 
 #include "config.hpp"
 
-BENCHMARK_GLOBALS;
-
 /**
  * Generic implementation.
  */

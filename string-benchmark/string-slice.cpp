@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <cstring>
 
-BENCHMARK_GLOBALS;
-
 /**
  * Generic implementation.
  */
@@ -85,10 +83,8 @@ unsigned long slice<PyStringObject>(benchmark::input& input)
  * See mg.c
  * This is substr (as rvalue).
  */
-int Perl_magic_getsubstr(SV *sv, MAGIC *)
+int Perl_magic_getsubstr(pTHX_ SV *sv, MAGIC *)
 {
-    dTHX; /* fetch context */
-
     STRLEN len;
     SV * const lsv = LvTARG(sv);
     const char * const tmps = SvPV_const(lsv,len);
@@ -138,7 +134,7 @@ unsigned long slice<SV>(benchmark::input& input)
             LvTARG(slice_args) = SvREFCNT_inc_simple(str);
             LvTARGOFF(slice_args) = from;
             LvTARGLEN(slice_args) = (to - from);
-            Perl_magic_getsubstr(slice_args, 0);
+            Perl_magic_getsubstr(aTHX_ slice_args, 0);
 
             total += SvCUR(slice_args);
         }

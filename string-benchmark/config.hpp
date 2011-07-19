@@ -22,8 +22,8 @@ typedef PyStringObject STR;
 #include <EXTERN.h>
 #include <perl.h>
 typedef SV STR;
-#define BENCHMARK_GLOBALS static PerlInterpreter *my_perl;
-#define BENCHMARK_INIT    PERL_SYS_INIT(&argc, &argv);     \
+#define BENCHMARK_INIT    static PerlInterpreter *my_perl; \
+                          PERL_SYS_INIT(&argc, &argv);     \
                           my_perl = perl_alloc();          \
                           perl_construct(my_perl);
 #define BENCHMARK_FINISH  perl_destruct(my_perl); \
@@ -101,10 +101,6 @@ typedef NullString STR;
 #endif // USE_NOTHING
 
 #include "input.hpp"
-
-#ifndef BENCHMARK_GLOBALS
-#define BENCHMARK_GLOBALS
-#endif // BENCHMARK_GLOBALS
 
 #ifndef BENCHMARK_INIT
 #define BENCHMARK_INIT

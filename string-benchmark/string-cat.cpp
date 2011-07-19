@@ -6,8 +6,6 @@
 #include "boost/const_string/concatenation.hpp"
 #endif // USE_CONST_STRING
 
-BENCHMARK_GLOBALS;
-
 /**
  * Generic implementation.
  */

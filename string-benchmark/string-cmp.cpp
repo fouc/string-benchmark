@@ -3,8 +3,6 @@
 
 #include "config.hpp"
 
-BENCHMARK_GLOBALS;
-
 /**
  * Generic implementation.
  */
@@ -50,10 +48,8 @@ void cmp<PyStringObject>(benchmark::input& input)
  * See sv.c
  */
 I32
-Perl_sv_eq_flags(register SV *sv1, register SV *sv2, const U32 flags)
+Perl_sv_eq_flags(pTHX_ register SV *sv1, register SV *sv2, const U32 flags)
 {
-    dTHX; /* fetch context */
-
     dVAR;
     const char *pv1;
     STRLEN cur1;
@@ -153,7 +149,7 @@ void cmp<SV>(benchmark::input& input)
     BENCHMARK_FOREACH(s)
     {
         SV* cur = newSVpv(s, 0);
-        PUTCHAR('0' + Perl_sv_eq_flags(cur, prev, SV_GMAGIC));
+        PUTCHAR('0' + Perl_sv_eq_flags(aTHX_ cur, prev, SV_GMAGIC));
         PUTCHAR('\n');
         SvREFCNT_dec(prev);
         prev = cur;
