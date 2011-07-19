@@ -26,7 +26,7 @@ unsigned long cat(benchmark::input& input)
 
 #ifdef USE_PYTHON_STRING
 /**
- * Be fair to Python.
+ * There's probably some BUGS here. But heh be fair to Python.
  *
  * See Python/ceval.c
  *
