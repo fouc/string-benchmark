@@ -114,7 +114,7 @@ unsigned long slice<SV>(benchmark::input& input)
 
     size_t total = 0, prev = 0, ante = 0;
 
-    SV* const slice_args = sv_2mortal(newSV_type(SVt_PVLV));
+    SV* const slice_args = newSV_type(SVt_PVLV);
 
     BENCHMARK_FOREACH(s)
     {
@@ -130,13 +130,14 @@ unsigned long slice<SV>(benchmark::input& input)
             {
                 std::swap(from, to);
             }
-
-            LvTARG(slice_args) = SvREFCNT_inc_simple(str);
+            LvTARG(slice_args) = SvREFCNT_inc(str);
+            SvREFCNT_dec(str);
             LvTARGOFF(slice_args) = from;
             LvTARGLEN(slice_args) = (to - from);
             Perl_magic_getsubstr(aTHX_ slice_args, 0);
 
             total += SvCUR(slice_args);
+
         }
         ante = prev;
         prev = cur;

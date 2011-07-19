@@ -12,7 +12,7 @@ In the simplest case(s), requires just a C++ compiler:
     $ find -print0 > DATA
     $ ./cat-std-string DATA
 
-To build the 40 programs, you will need:
+To build and test the 40 programs, you will need:
 - g++
 - make
 - cmake
@@ -22,8 +22,6 @@ To build the 40 programs, you will need:
 - Boehm Garbage Collector + Cord
 - Qt4
 - GNU time
-- md5sum
-- chrt
 
 Then, if you're feeling (very) lucky, you can:
 
