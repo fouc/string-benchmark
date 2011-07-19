@@ -16,7 +16,6 @@ void cmp(benchmark::input& input)
     BENCHMARK_FOREACH(s)
     {
         cur = s;
-
         PUTCHAR('0' + (cur == prev));
         PUTCHAR('\n');
 
@@ -48,20 +47,97 @@ void cmp<PyStringObject>(benchmark::input& input)
 
 #ifdef USE_PERL_STRING
 /**
- * See util.c
+ * See sv.c
  */
-I32 Perl_foldEQ(const char *s1, const char *s2, register I32 len)
+I32
+Perl_sv_eq_flags(register SV *sv1, register SV *sv2, const U32 flags)
 {
-    register const U8 *a = (const U8 *)s1;
-    register const U8 *b = (const U8 *)s2;
+    dTHX; /* fetch context */
 
-    while (len--)
+    dVAR;
+    const char *pv1;
+    STRLEN cur1;
+    const char *pv2;
+    STRLEN cur2;
+    I32  eq     = 0;
+    char *tpv   = NULL;
+    SV* svrecode = NULL;
+
+    if (!sv1)
     {
-        if (*a != *b && *a != PL_fold[*b])
-            return 0;
-        a++,b++;
+        pv1 = "";
+        cur1 = 0;
     }
-    return 1;
+    else
+    {
+        /* if pv1 and pv2 are the same, second SvPV_const call may
+         * invalidate pv1 (if we are handling magic), so we may need to
+         * make a copy */
+        if (sv1 == sv2 && flags & SV_GMAGIC
+                && (SvTHINKFIRST(sv1) || SvGMAGICAL(sv1)))
+        {
+            pv1 = SvPV_const(sv1, cur1);
+            sv1 = newSVpvn_flags(pv1, cur1, SVs_TEMP | SvUTF8(sv2));
+        }
+        pv1 = SvPV_flags_const(sv1, cur1, flags);
+    }
+
+    if (!sv2)
+    {
+        pv2 = "";
+        cur2 = 0;
+    }
+    else
+        pv2 = SvPV_flags_const(sv2, cur2, flags);
+
+    if (cur1 && cur2 && SvUTF8(sv1) != SvUTF8(sv2) && !IN_BYTES)
+    {
+        /* Differing utf8ness.
+        * Do not UTF8size the comparands as a side-effect. */
+        if (PL_encoding)
+        {
+            if (SvUTF8(sv1))
+            {
+                svrecode = newSVpvn(pv2, cur2);
+                sv_recode_to_utf8(svrecode, PL_encoding);
+                pv2 = SvPV_const(svrecode, cur2);
+            }
+            else
+            {
+                svrecode = newSVpvn(pv1, cur1);
+                sv_recode_to_utf8(svrecode, PL_encoding);
+                pv1 = SvPV_const(svrecode, cur1);
+            }
+            /* Now both are in UTF-8. */
+            if (cur1 != cur2)
+            {
+                SvREFCNT_dec(svrecode);
+                return FALSE;
+            }
+        }
+        else
+        {
+            if (SvUTF8(sv1))
+            {
+                /* sv1 is the UTF-8 one  */
+                exit(-1); // Not handled
+            }
+            else
+            {
+                /* sv2 is the UTF-8 one  */
+                exit(-1); // Not handled
+            }
+        }
+    }
+
+    if (cur1 == cur2)
+        eq = (pv1 == pv2) || memEQ(pv1, pv2, cur1);
+
+    SvREFCNT_dec(svrecode);
+    if (tpv)
+        Safefree(tpv);
+
+    return eq;
 }
 
 /**
@@ -77,10 +153,7 @@ void cmp<SV>(benchmark::input& input)
     BENCHMARK_FOREACH(s)
     {
         SV* cur = newSVpv(s, 0);
-        STRLEN s1_len, s2_len;
-        const char* const s1 = SvPV(cur, s1_len);
-        const char* const s2 = SvPV(prev, s2_len);
-        PUTCHAR('0' + Perl_foldEQ(s1, s2, std::max(s1_len, s2_len)));
+        PUTCHAR('0' + Perl_sv_eq_flags(cur, prev, SV_GMAGIC));
         PUTCHAR('\n');
         SvREFCNT_dec(prev);
         prev = cur;

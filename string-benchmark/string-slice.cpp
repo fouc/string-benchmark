@@ -96,7 +96,7 @@ int Perl_magic_getsubstr(SV *sv, MAGIC *)
     STRLEN rem = LvTARGLEN(sv);
 
     if (SvUTF8(lsv))
-        exit(-1); // Should not happen
+        exit(-1); // Not handled
     if (offs > len)
         offs = len;
     if (rem > len - offs)
