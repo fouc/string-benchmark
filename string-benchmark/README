@@ -23,7 +23,7 @@ To build and test the 40 programs, you will need:
 - Qt4
 - GNU time
 
-Then, if you're feeling (very) lucky, you can:
+At your convenience, then you can:
 
     $ mkdir build
     $ cd build
