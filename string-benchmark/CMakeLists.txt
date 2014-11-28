@@ -79,7 +79,7 @@ foreach( benchmark ${benchmarks} )
         include_directories( ${PERL_INCLUDE_PATH} )
         add_executable( ${benchmark}-perl-string "string-${benchmark}.cpp" )
         set_target_properties( ${benchmark}-perl-string PROPERTIES COMPILE_FLAGS -DUSE_PERL_STRING )
-        target_link_libraries( ${benchmark}-perl-string ${PERL_LIBRARY})
+        target_link_libraries( ${benchmark}-perl-string ${PERL_LIBRARY} -pthread)
     endif( PERLLIBS_FOUND )
 
     ## Qt4 QString
